@@ -1,11 +1,48 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academiz</title>
+  <meta charset="UTF-8">
+  <title>Sistema Acadêmico</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Hello World</h1>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">BIGSEI</div>
+      <nav>
+        <ul>
+          <li data-page="inicio" class="active">Início</li>
+          <li data-page="alunos">Alunos</li>
+          <li data-page="professores">Professores</li>
+          <li data-page="cursos">Cursos</li>
+          <li data-page="disciplinas">Disciplinas</li>
+          <li data-page="turmas">Turmas</li>
+          <li data-page="matriculas">Matrículas</li>
+        </ul>
+      </nav>
+      <div class="profile">
+        <div class="avatar"></div>
+        <div>
+          <div class="name">Adrian Lizarbe</div>
+          <div class="email">adrian@example.com</div>
+        </div>
+        <button id="logout">Sair</button>
+      </div>
+    </aside>
+    <!-- Main Content -->
+    <main class="main-content">
+      <header>
+        <div class="welcome">
+          <h2>Bem-vindo, Adrian Lizarbe</h2>
+          <p>Sistema Acadêmico de Gestão</p>
+        </div>
+      </header>
+      <section id="page-content">
+        <!-- Conteúdo dinâmico aqui -->
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
