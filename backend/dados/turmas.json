@@ -1,0 +1,14 @@
+[
+    {
+      "id": 1,
+      "codigo": "ES101",
+      "curso": "Engenharia de Software",
+      "professor": "Prof. João Silva"
+    },
+    {
+      "id": 2,
+      "codigo": "SI102",
+      "curso": "Sistemas de Informação",
+      "professor": "Profa. Maria Oliveira"
+    }
+  ]

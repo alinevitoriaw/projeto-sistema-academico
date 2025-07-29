@@ -1,0 +1,14 @@
+[
+    {
+      "id": 1,
+      "nome": "Aline Vitória",
+      "matricula": "515151",
+      "curso": "Engenharia de Software"
+    },
+    {
+      "id": 2,
+      "nome": "Maria Júlia",
+      "matricula": "525252",
+      "curso": "Ciencia da Computação"
+    }
+  ]
