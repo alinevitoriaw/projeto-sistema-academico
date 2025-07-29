@@ -1,5 +1,10 @@
 // Utilidades para localStorage
+// getData e setData não serão usados para alunos (apenas entidades ainda não integradas ao backend)
 function getData(key) {
+  if (key === 'alunos') {
+    alert('Alunos agora só são lidos do backend!');
+    return [];
+  }
   return JSON.parse(localStorage.getItem(key) || "[]");
 }
 function setData(key, data) {
@@ -65,94 +70,142 @@ function renderInicio() {
 
 // ----------- ALUNOS -----------
 function renderAlunos() {
-  const alunos = getData('alunos');
-  document.getElementById('page-content').innerHTML = `
-    <div class="card">
-      <h3>Alunos</h3>
-      <form id="aluno-form">
-        <input type="hidden" name="id">
-        <div class="form-group">
-          <label>Nome</label>
-          <input name="nome" required>
+  // Busca alunos do backend
+  fetch('http://localhost:8000/alunos.php')
+    .then(res => res.json())
+    .then(alunos => {
+      document.getElementById('page-content').innerHTML = `
+        <div class="card">
+          <h3>Alunos</h3>
+          <form id="aluno-form">
+  <input type="hidden" name="id">
+  <div class="form-group">
+    <label>Nome</label>
+    <input name="nome" required>
+  </div>
+  <div class="form-group">
+    <label>Email</label>
+    <input name="email" type="email" required>
+  </div>
+  <div class="form-group">
+    <label>Matrícula</label>
+    <input name="matricula" required>
+  </div>
+  <div class="form-group">
+    <label>CPF</label>
+    <input name="cpf" required>
+  </div>
+  <div class="form-group">
+    <label>Data de Nascimento</label>
+    <input name="data_nascimento" type="date" required>
+  </div>
+  <div class="form-group">
+    <label>Telefone</label>
+    <input name="telefone" required>
+  </div>
+  <div class="form-group">
+    <label>Turma</label>
+    <select name="turma">
+      <option value="">Selecione</option>
+    </select>
+  </div>
+  <button type="submit">Salvar</button>
+  <button type="reset">Limpar</button>
+</form>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nome</th><th>Email</th><th>Matrícula</th><th>Turma</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="alunos-tbody"></tbody>
+          </table>
+          <div id="aluno-modal" style="display:none"></div>
         </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input name="email" type="email" required>
-        </div>
-        <div class="form-group">
-          <label>Matrícula</label>
-          <input name="matricula" required>
-        </div>
-        <div class="form-group">
-          <label>Turma</label>
-          <select name="turma">
-            <option value="">Selecione</option>
-            ${getData('turmas').map(t => `<option value="${t.id}">${t.nome}</option>`).join('')}
-          </select>
-        </div>
-        <button type="submit">Salvar</button>
-        <button type="reset">Limpar</button>
-      </form>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Nome</th><th>Email</th><th>Matrícula</th><th>Turma</th><th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${alunos.map(a => `
-            <tr>
-              <td>${a.nome}</td>
-              <td>${a.email}</td>
-              <td>${a.matricula}</td>
-              <td>${getData('turmas').find(t=>t.id===a.turma)?.nome||''}</td>
-              <td class="actions">
-                <button onclick="editAluno('${a.id}')">Editar</button>
-                <button class="danger" onclick="deleteAluno('${a.id}')">Excluir</button>
-                <button onclick="viewAluno('${a.id}')">Ver</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div id="aluno-modal" style="display:none"></div>
-  `;
-  document.getElementById('aluno-form').onsubmit = saveAluno;
+      `;
+      // Renderiza alunos na tabela
+      const tbody = document.getElementById('alunos-tbody');
+      alunos.forEach(aluno => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${aluno.nome}</td>
+          <td>${aluno.email}</td>
+          <td>${aluno.matricula}</td>
+          <td>${aluno.turma || ''}</td>
+          <td>
+            <button onclick=\"editAluno('${aluno.matricula}')\">Editar</button>
+            <button onclick=\"deleteAluno('${aluno.matricula}')\">Excluir</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      // Aqui você pode adicionar eventos para o formulário se quiser integrar o cadastro futuramente
+      document.getElementById('aluno-form').onsubmit = saveAluno;
+    });
 }
 function saveAluno(e) {
   e.preventDefault();
   const form = e.target;
-  let alunos = getData('alunos');
-  const id = form.id.value || Date.now().toString();
   const aluno = {
-    id,
-    nome: form.nome.value,
-    email: form.email.value,
     matricula: form.matricula.value,
-    turma: form.turma.value
+    nome: form.nome.value,
+    cpf: form.cpf ? form.cpf.value : '',
+    data_nascimento: form.data_nascimento ? form.data_nascimento.value : '',
+    email: form.email.value,
+    telefone: form.telefone ? form.telefone.value : ''
   };
-  if (form.id.value) {
-    alunos = alunos.map(a => a.id === id ? aluno : a);
-  } else {
-    alunos.push(aluno);
-  }
-  setData('alunos', alunos);
-  renderAlunos();
-}
-function editAluno(id) {
-  const aluno = getData('alunos').find(a => a.id === id);
-  const form = document.getElementById('aluno-form');
-  form.id.value = aluno.id;
-  form.nome.value = aluno.nome;
-  form.email.value = aluno.email;
-  form.matricula.value = aluno.matricula;
-  form.turma.value = aluno.turma;
-}
-function deleteAluno(id) {
-  if (confirm('Excluir este aluno?')) {
-    setData('alunos', getData('alunos').filter(a => a.id !== id));
+  fetch('http://localhost:8000/alunos.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(aluno)
+  })
+  .then(async res => {
+    let data = {};
+    if (res.ok) {
+      try { data = await res.json(); }
+      catch { data = { mensagem: 'Erro ao interpretar JSON.' }; }
+    } else {
+      data = { mensagem: 'Erro na requisição: ' + res.status };
+    }
+    alert(JSON.stringify(data));
     renderAlunos();
+  })
+  .catch(err => alert('Erro ao cadastrar/atualizar aluno! ' + err));
+}
+function editAluno(matricula) {
+  fetch(`http://localhost:8000/alunos.php`)
+    .then(res => res.json())
+    .then(alunos => {
+      const aluno = alunos.find(a => String(a.matricula) === String(matricula));
+      if (!aluno) return alert('Aluno não encontrado!');
+      const form = document.getElementById('aluno-form');
+      form.matricula.value = aluno.matricula;
+      form.nome.value = aluno.nome;
+      form.cpf.value = aluno.cpf;
+      form.data_nascimento.value = aluno.data_nascimento;
+      form.email.value = aluno.email;
+      form.telefone.value = aluno.telefone;
+      // Se tiver campo turma, preencha também
+      if (form.turma) form.turma.value = aluno.turma || '';
+      // NÃO CHAME saveAluno() AQUI!
+    });
+}
+function deleteAluno(matricula) {
+  if (confirm('Excluir este aluno?')) {
+    fetch(`http://localhost:8000/alunos.php`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matricula })
+    })
+    .then(res => {
+      if (res.ok) {
+        alert('Aluno excluído com sucesso!');
+        renderAlunos();
+      } else {
+        alert('Erro ao excluir aluno!');
+      }
+    })
+    .catch(err => alert('Erro ao excluir aluno! ' + err));
   }
 }
 function viewAluno(id) {
@@ -235,22 +288,71 @@ function renderProfessores() {
 function saveProf(e) {
   e.preventDefault();
   const form = e.target;
-  let professores = getData('professores');
-  const id = form.id.value || Date.now().toString();
   const prof = {
-    id,
+    id: form.id.value,
     nome: form.nome.value,
     email: form.email.value,
     disciplinas: Array.from(form.disciplinas.selectedOptions).map(o=>o.value),
     turmas: Array.from(form.turmas.selectedOptions).map(o=>o.value)
   };
-  if (form.id.value) {
-    professores = professores.map(p => p.id === id ? prof : p);
-  } else {
-    professores.push(prof);
+  fetch('../backend/api/professores.php', {
+    method: prof.id ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prof)
+  })
+    .then(async res => {
+      let data;
+      try { data = await res.json(); } catch { data = {mensagem: await res.text()}; }
+      alert(JSON.stringify(data));
+      renderProfessores();
+    })
+    .catch(err => alert('Erro ao salvar professor! ' + err));
+}
+
+function editProf(id) {
+  fetch(`../backend/api/professores.php?id=${id}`)
+    .then(res => res.json())
+    .then(prof => {
+      const form = document.getElementById('prof-form');
+      form.id.value = prof.id;
+      form.nome.value = prof.nome;
+      form.email.value = prof.email;
+      Array.from(form.disciplinas.options).forEach(opt => opt.selected = (prof.disciplinas||[]).includes(opt.value));
+      Array.from(form.turmas.options).forEach(opt => opt.selected = (prof.turmas||[]).includes(opt.value));
+    });
+}
+
+function deleteProf(id) {
+  if (confirm('Excluir este professor?')) {
+    fetch(`../backend/api/professores.php?id=${id}`, {
+      method: 'DELETE'
+    })
+      .then(async res => {
+        let data;
+        try { data = await res.json(); } catch { data = {mensagem: await res.text()}; }
+        alert(JSON.stringify(data));
+        renderProfessores();
+      })
+      .catch(err => alert('Erro ao excluir professor! ' + err));
   }
-  setData('professores', professores);
-  renderProfessores();
+}
+
+function viewProf(id) {
+  fetch(`../backend/api/professores.php?id=${id}`)
+    .then(res => res.json())
+    .then(prof => {
+      document.getElementById('prof-modal').style.display = 'block';
+      document.getElementById('prof-modal').innerHTML = `
+        <div class="card" style="position:fixed;top:20%;left:40%;z-index:10;min-width:300px;">
+          <h3>Informações do Professor</h3>
+          <p><b>Nome:</b> ${prof.nome}</p>
+          <p><b>Email:</b> ${prof.email}</p>
+          <p><b>Disciplinas:</b> ${(prof.disciplinas||[]).join(', ')}</p>
+          <p><b>Turmas:</b> ${(prof.turmas||[]).join(', ')}</p>
+          <button onclick="closeProfModal()">Fechar</button>
+        </div>
+      `;
+    });
 }
 function editProf(id) {
   const prof = getData('professores').find(p => p.id === id);
