@@ -1,39 +1,45 @@
 <?php
-$arquivo = '../dados/turmas.json';
+require_once '../conexao.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 switch ($metodo) {
   case 'GET':
-    echo file_get_contents($arquivo);
+    $stmt = $pdo->query('SELECT * FROM turmas');
+    $turmas = $stmt->fetchAll();
+    echo json_encode($turmas);
     break;
 
   case 'POST':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $turmas = json_decode(file_get_contents($arquivo), true);
-    $dados['id'] = count($turmas) + 1;
-    $turmas[] = $dados;
-    file_put_contents($arquivo, json_encode($turmas, JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('INSERT INTO turmas (nome, semestre, ano, id_disciplina, id_SIAPE) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([
+      $dados['nome'] ?? '',
+      $dados['semestre'] ?? '',
+      $dados['ano'] ?? null,
+      $dados['id_disciplina'] ?? null,
+      $dados['id_SIAPE'] ?? null
+    ]);
     echo json_encode(['mensagem' => 'Turma cadastrada']);
     break;
 
   case 'PUT':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $turmas = json_decode(file_get_contents($arquivo), true);
-    foreach ($turmas as &$turma) {
-      if ($turma['id'] == $dados['id']) {
-        $turma = $dados;
-        break;
-      }
-    }
-    file_put_contents($arquivo, json_encode($turmas, JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('UPDATE turmas SET nome=?, semestre=?, ano=?, id_disciplina=?, id_SIAPE=? WHERE id_turma=?');
+    $stmt->execute([
+      $dados['nome'] ?? '',
+      $dados['semestre'] ?? '',
+      $dados['ano'] ?? null,
+      $dados['id_disciplina'] ?? null,
+      $dados['id_SIAPE'] ?? null,
+      $dados['id_turma']
+    ]);
     echo json_encode(['mensagem' => 'Turma atualizada']);
     break;
 
   case 'DELETE':
     parse_str(file_get_contents('php://input'), $dados);
-    $turmas = json_decode(file_get_contents($arquivo), true);
-    $turmas = array_filter($turmas, fn($t) => $t['id'] != $dados['id']);
-    file_put_contents($arquivo, json_encode(array_values($turmas), JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('DELETE FROM turmas WHERE id_turma=?');
+    $stmt->execute([$dados['id_turma']]);
     echo json_encode(['mensagem' => 'Turma excluída']);
     break;
 

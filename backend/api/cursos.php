@@ -1,39 +1,41 @@
 <?php
-$arquivo = '../dados/cursos.json';
+require_once '../conexao.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 switch ($metodo) {
   case 'GET':
-    echo file_get_contents($arquivo);
+    $stmt = $pdo->query('SELECT * FROM cursos');
+    $cursos = $stmt->fetchAll();
+    echo json_encode($cursos);
     break;
 
   case 'POST':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $cursos = json_decode(file_get_contents($arquivo), true);
-    $dados['id'] = count($cursos) + 1;
-    $cursos[] = $dados;
-    file_put_contents($arquivo, json_encode($cursos, JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('INSERT INTO cursos (nome_curso, descricao_curso, carga_horaria) VALUES (?, ?, ?)');
+    $stmt->execute([
+      $dados['nome_curso'] ?? '',
+      $dados['descricao_curso'] ?? '',
+      $dados['carga_horaria'] ?? null
+    ]);
     echo json_encode(['mensagem' => 'Curso cadastrado']);
     break;
 
   case 'PUT':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $cursos = json_decode(file_get_contents($arquivo), true);
-    foreach ($cursos as &$curso) {
-      if ($curso['id'] == $dados['id']) {
-        $curso = $dados;
-        break;
-      }
-    }
-    file_put_contents($arquivo, json_encode($cursos, JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('UPDATE cursos SET nome_curso=?, descricao_curso=?, carga_horaria=? WHERE id_curso=?');
+    $stmt->execute([
+      $dados['nome_curso'] ?? '',
+      $dados['descricao_curso'] ?? '',
+      $dados['carga_horaria'] ?? null,
+      $dados['id_curso']
+    ]);
     echo json_encode(['mensagem' => 'Curso atualizado']);
     break;
 
   case 'DELETE':
     parse_str(file_get_contents('php://input'), $dados);
-    $cursos = json_decode(file_get_contents($arquivo), true);
-    $cursos = array_filter($cursos, fn($c) => $c['id'] != $dados['id']);
-    file_put_contents($arquivo, json_encode(array_values($cursos), JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('DELETE FROM cursos WHERE id_curso=?');
+    $stmt->execute([$dados['id_curso']]);
     echo json_encode(['mensagem' => 'Curso excluído']);
     break;
 

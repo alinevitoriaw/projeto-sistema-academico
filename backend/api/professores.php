@@ -1,39 +1,47 @@
 <?php
-$arquivo = '../dados/professores.json';
+require_once '../conexao.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 switch ($metodo) {
   case 'GET':
-    echo file_get_contents($arquivo);
+    $stmt = $pdo->query('SELECT * FROM professores');
+    $professores = $stmt->fetchAll();
+    echo json_encode($professores);
     break;
 
   case 'POST':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $professores = json_decode(file_get_contents($arquivo), true);
-    $dados['id'] = count($professores) + 1;
-    $professores[] = $dados;
-    file_put_contents($arquivo, json_encode($professores, JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('INSERT INTO professores (nome, cpf, data_nascimento, email, telefone, endereco) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->execute([
+      $dados['nome'] ?? '',
+      $dados['cpf'] ?? '',
+      $dados['data_nascimento'] ?? null,
+      $dados['email'] ?? '',
+      $dados['telefone'] ?? '',
+      $dados['endereco'] ?? ''
+    ]);
     echo json_encode(['mensagem' => 'Professor cadastrado']);
     break;
 
   case 'PUT':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $professores = json_decode(file_get_contents($arquivo), true);
-    foreach ($professores as &$prof) {
-      if ($prof['id'] == $dados['id']) {
-        $prof = $dados;
-        break;
-      }
-    }
-    file_put_contents($arquivo, json_encode($professores, JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('UPDATE professores SET nome=?, cpf=?, data_nascimento=?, email=?, telefone=?, endereco=? WHERE id_SIAPE=?');
+    $stmt->execute([
+      $dados['nome'] ?? '',
+      $dados['cpf'] ?? '',
+      $dados['data_nascimento'] ?? null,
+      $dados['email'] ?? '',
+      $dados['telefone'] ?? '',
+      $dados['endereco'] ?? '',
+      $dados['id_SIAPE']
+    ]);
     echo json_encode(['mensagem' => 'Professor atualizado']);
     break;
 
   case 'DELETE':
     parse_str(file_get_contents('php://input'), $dados);
-    $professores = json_decode(file_get_contents($arquivo), true);
-    $professores = array_filter($professores, fn($p) => $p['id'] != $dados['id']);
-    file_put_contents($arquivo, json_encode(array_values($professores), JSON_PRETTY_PRINT));
+    $stmt = $pdo->prepare('DELETE FROM professores WHERE id_SIAPE=?');
+    $stmt->execute([$dados['id_SIAPE']]);
     echo json_encode(['mensagem' => 'Professor excluído']);
     break;
 
