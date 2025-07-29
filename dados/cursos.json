@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "nome": "Engenharia de Software",
+    "duracao": "10 semestres"
+  },
+  {
+    "id": 2,
+    "nome": "Sistemas de Informação",
+    "duracao": "8 semestres"
+  }
+]
