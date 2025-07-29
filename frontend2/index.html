@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema Acadêmico</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="selection-container">
+    <div class="login-box">
+      <h1>BIGSEI</h1>
+      <p>Selecione seu perfil para continuar</p>
+      <div class="selection-buttons">
+        <button id="btn-select-aluno">Sou Aluno</button>
+        <button id="btn-select-professor">Sou Professor</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="login-aluno-container" class="login-container" style="display: none;">
+    <div class="login-box">
+      <button class="back-button" data-target="selection-container">← Voltar</button>
+      <h1>Portal do Aluno</h1>
+      <form id="login-aluno-form">
+        <div class="form-group">
+          <label for="matricula">Sua Matrícula</label>
+          <input type="text" id="matricula" required>
+        </div>
+        <button type="submit">Entrar</button>
+        <p id="login-aluno-error" class="error-message"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="login-professor-container" class="login-container" style="display: none;">
+    <div class="login-box">
+      <button class="back-button" data-target="selection-container">← Voltar</button>
+      <h1>Portal do Professor</h1>
+      <form id="login-professor-form">
+        <div class="form-group">
+          <label for="id_siape">Seu ID SIAPE</label>
+          <input type="text" id="id_siape" required>
+        </div>
+        <button type="submit">Entrar</button>
+        <p id="login-professor-error" class="error-message"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="app" style="display: none;">
+    <aside class="sidebar">
+      <div class="logo">BIGSEI</div>
+      <nav id="main-nav">
+      </nav>
+      <div class="profile">
+        <div class="avatar"></div>
+        <div>
+          <div class="name" id="user-name-perfil"></div>
+          <div class="email" id="user-email-perfil"></div>
+        </div>
+        <button id="logout">Sair</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <header>
+        <div class="welcome">
+          <h2 id="welcome-message"></h2>
+          <p id="welcome-submessage"></p>
+        </div>
+      </header>
+      <section id="page-content"></section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
