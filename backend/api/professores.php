@@ -1,4 +1,12 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 require_once '../conexao.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -39,7 +47,7 @@ switch ($metodo) {
     break;
 
   case 'DELETE':
-    parse_str(file_get_contents('php://input'), $dados);
+    $dados = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare('DELETE FROM professores WHERE id_SIAPE=?');
     $stmt->execute([$dados['id_SIAPE']]);
     echo json_encode(['mensagem' => 'Professor excluído']);

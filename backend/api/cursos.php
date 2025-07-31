@@ -1,4 +1,13 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once '../conexao.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -11,13 +20,33 @@ switch ($metodo) {
 
   case 'POST':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $stmt = $pdo->prepare('INSERT INTO cursos (nome_curso, descricao_curso, carga_horaria) VALUES (?, ?, ?)');
-    $stmt->execute([
-      $dados['nome_curso'] ?? '',
-      $dados['descricao_curso'] ?? '',
-      $dados['carga_horaria'] ?? null
-    ]);
-    echo json_encode(['mensagem' => 'Curso cadastrado']);
+  
+    if (!empty($dados['id_curso'])) {
+      // Atualização (upsert)
+      $stmt = $pdo->prepare('INSERT INTO cursos (id_curso, nome_curso, descricao_curso, carga_horaria)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          nome_curso=VALUES(nome_curso),
+          descricao_curso=VALUES(descricao_curso),
+          carga_horaria=VALUES(carga_horaria)');
+      $stmt->execute([
+        $dados['id_curso'],
+        $dados['nome_curso'] ?? '',
+        $dados['descricao_curso'] ?? '',
+        $dados['carga_horaria'] ?? null
+      ]);
+      echo json_encode(['mensagem' => 'Curso atualizado com sucesso', 'id_curso' => $dados['id_curso']]);
+    } else {
+      // Cadastro novo (sem id_curso)
+      $stmt = $pdo->prepare('INSERT INTO cursos (nome_curso, descricao_curso, carga_horaria) VALUES (?, ?, ?)');
+      $stmt->execute([
+        $dados['nome_curso'] ?? '',
+        $dados['descricao_curso'] ?? '',
+        $dados['carga_horaria'] ?? null
+      ]);
+      $novo_id = $pdo->lastInsertId();
+      echo json_encode(['mensagem' => 'Curso cadastrado com sucesso', 'id_curso' => $novo_id]);
+    }
     break;
 
   case 'PUT':
@@ -33,9 +62,9 @@ switch ($metodo) {
     break;
 
   case 'DELETE':
-    parse_str(file_get_contents('php://input'), $dados);
+    $dados = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare('DELETE FROM cursos WHERE id_curso=?');
-    $stmt->execute([$dados['id_curso']]);
+    $stmt->execute([$dados['id_curso'] ?? null]);
     echo json_encode(['mensagem' => 'Curso excluído']);
     break;
 

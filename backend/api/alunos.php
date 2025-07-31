@@ -14,23 +14,22 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 try {
   switch ($metodo) {
   case 'GET':
-    $stmt = $pdo->query('SELECT * FROM alunos');
-    $alunos = $stmt->fetchAll();
-    echo json_encode($alunos);
+    $stmt = $pdo->query('SELECT * FROM aluno');
+    $aluno = $stmt->fetchAll();
+    echo json_encode($aluno);
     break;
 
-    case 'POST':
-      $dados = json_decode(file_get_contents('php://input'), true);
-      $stmt = $pdo->prepare('INSERT INTO alunos (matricula, nome, cpf, data_nascimento, email, telefone)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          nome=VALUES(nome),
+  case 'POST':
+    $dados = json_decode(file_get_contents('php://input'), true);
+    $stmt = $pdo->prepare('INSERT INTO aluno (nome, cpf, data_nascimento, email, telefone)
+      VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nome=VALUES(nome),
           cpf=VALUES(cpf),
           data_nascimento=VALUES(data_nascimento),
           email=VALUES(email),
           telefone=VALUES(telefone)');
       $stmt->execute([
-          $dados['matricula'] ?? null,
           $dados['nome'] ?? '',
           $dados['cpf'] ?? '',
           $dados['data_nascimento'] ?? null,
@@ -42,22 +41,22 @@ try {
 
   case 'PUT':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $stmt = $pdo->prepare('UPDATE alunos SET nome=?, cpf=?, data_nascimento=?, email=?, telefone=? WHERE matricula=?');
+    $stmt = $pdo->prepare('UPDATE aluno SET nome=?, cpf=?, data_nascimento=?, email=?, telefone=? WHERE id_matricula=?');
     $stmt->execute([
         $dados['nome'] ?? '',
         $dados['cpf'] ?? '',
         $dados['data_nascimento'] ?? null,
         $dados['email'] ?? '',
         $dados['telefone'] ?? '',
-        $dados['matricula']
+        $dados['id_matricula']
     ]);
     echo json_encode(['mensagem' => 'Aluno atualizado']);
     break;
 
   case 'DELETE':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $stmt = $pdo->prepare('DELETE FROM alunos WHERE matricula=?');
-    $stmt->execute([$dados['matricula']]);
+    $stmt = $pdo->prepare('DELETE FROM aluno WHERE id_matricula=?');
+    $stmt->execute([$dados['id_matricula']]);
     echo json_encode(['mensagem' => 'Aluno excluído']);
     break;
 
