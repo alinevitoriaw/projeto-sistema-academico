@@ -110,89 +110,95 @@ async function renderInicio() {
 }
 
 // ----------- ALUNOS -----------
-function renderAlunos() {
-  // Busca alunos do backend
-  fetch('http://localhost:8000/alunos.php')
-    .then(res => res.json())
-    .then(alunos => {
-      document.getElementById('page-content').innerHTML = `
-        <div class="card">
-          <h3>Alunos</h3>
-          <form id="aluno-form">
-  <input type="hidden" name="id">
-  <div class="form-group">
-    <label>Nome</label>
-    <input name="nome" required>
-  </div>
-  <div class="form-group">
-    <label>Email</label>
-    <input name="email" type="email" required>
-  </div>
-  <div class="form-group">
-    <label>CPF</label>
-    <input name="cpf" required>
-  </div>
-  <div class="form-group">
-    <label>Data de Nascimento</label>
-    <input name="data_nascimento" type="date" required>
-  </div>
-  <div class="form-group">
-    <label>Telefone</label>
-    <input name="telefone" required>
-  </div>
-  <div class="form-group">
-    <label>Turma</label>
-    <select name="turma">
-      <option value="">Selecione</option>
-    </select>
-  </div>
-  <button type="submit">Salvar</button>
-  <button type="reset">Limpar</button>
-</form>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Nome</th><th>Email</th><th>Matrícula</th><th>Turma</th><th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="alunos-tbody"></tbody>
-          </table>
-          <div id="aluno-modal" style="display:none"></div>
+async function renderAlunos() {
+  // Busca alunos e turmas do backend em paralelo
+  const [alunos, turmas] = await Promise.all([
+    fetch('http://localhost:8000/alunos.php').then(res => res.json()),
+    fetch('http://localhost:8000/turmas.php').then(res => res.json())
+  ]);
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="card">
+      <h3>Alunos</h3>
+      <form id="aluno-form">
+        <input type="hidden" name="id">
+        <div class="form-group">
+          <label>Nome</label>
+          <input name="nome" required>
         </div>
-      `;
-      // Renderiza alunos na tabela
-      const tbody = document.getElementById('alunos-tbody');
-      alunos.forEach(aluno => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${aluno.nome}</td>
-          <td>${aluno.email}</td>
-          <td>${aluno.turma || ''}</td>
-          <td>
-            <button onclick=\"editAluno('${aluno.id}')\">Editar</button>
-            <button onclick=\"deleteAluno('${aluno.id}')\">Excluir</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      // Aqui você pode adicionar eventos para o formulário se quiser integrar o cadastro futuramente
-      document.getElementById('aluno-form').onsubmit = saveAluno;
-    });
+        <div class="form-group">
+          <label>Email</label>
+          <input name="email" type="email" required>
+        </div>
+        <div class="form-group">
+          <label>CPF</label>
+          <input name="cpf" required>
+        </div>
+        <div class="form-group">
+          <label>Data de Nascimento</label>
+          <input name="data_nascimento" type="date" required>
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input name="telefone" required>
+        </div>
+        <div class="form-group">
+          <label>Turma</label>
+          <select name="turma" required>
+            <option value="">Selecione</option>
+            ${turmas.map(t => `<option value="${t.id_turma}">${t.nome}</option>`).join('')}
+          </select>
+        </div>
+        <button type="submit">Salvar</button>
+        <button type="reset">Limpar</button>
+      </form>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nome</th><th>Email</th><th>Matrícula</th><th>Turma</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="alunos-tbody"></tbody>
+      </table>
+      <div id="aluno-modal" style="display:none"></div>
+    </div>
+  `;
+
+  // Renderiza alunos na tabela
+  const tbody = document.getElementById('alunos-tbody');
+  alunos.forEach(aluno => {
+    const turmaNome = turmas.find(t => String(t.id_turma) === String(aluno.turma))?.nome || '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${aluno.nome}</td>
+      <td>${aluno.email}</td>
+      <td>${aluno.id_matricula || ''}</td>
+      <td>${turmaNome}</td>
+      <td>
+        <button onclick="editAluno('${aluno.id_aluno}')">Editar</button>
+        <button onclick="deleteAluno('${aluno.id_aluno}')">Excluir</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Handler para cadastro/edição
+  document.getElementById('aluno-form').onsubmit = saveAluno;
 }
 function saveAluno(e) {
   e.preventDefault();
   const form = e.target;
   const aluno = {
-    id_matricula: form.id.value,
+    id_aluno: form.id.value,
     nome: form.nome.value,
     cpf: form.cpf ? form.cpf.value : '',
     data_nascimento: form.data_nascimento ? form.data_nascimento.value : '',
     email: form.email.value,
     telefone: form.telefone ? form.telefone.value : '',
-    turma: form.turma ? form.turma.value : ''
+    id_turma: form.turma ? form.turma.value : ''
   };
   // Se id preenchido, é edição (PUT), senão é criação (POST)
-  const method = aluno.id_matricula ? 'PUT' : 'POST';
+  const method = aluno.id_aluno ? 'PUT' : 'POST';
   fetch('http://localhost:8000/alunos.php', {
     method,
     headers: { 'Content-Type': 'application/json' },
@@ -211,16 +217,16 @@ function saveAluno(e) {
     })
     .catch(err => alert('Erro ao cadastrar/atualizar aluno! ' + err));
 }
-function editAluno(matricula) {
+function editAluno(id_aluno) {
   Promise.all([
     fetch('http://localhost:8000/alunos.php').then(res => res.json()),
     fetch('http://localhost:8000/turmas.php').then(res => res.json())
   ]).then(([alunos, turmas]) => {
     // Aqui, id_matricula é o identificador único do aluno retornado pelo backend
-    const aluno = alunos.find(a => String(a.id) === String(matricula) || String(a.id_matricula) === String(matricula));
+    const aluno = alunos.find(a => String(a.id_aluno) === String(id_aluno));
     if (!aluno) return alert('Aluno não encontrado!');
     const form = document.getElementById('aluno-form');
-    form.id.value = aluno.id || aluno.id_matricula || '';
+    form.id.value = aluno.id_aluno || '';
     form.nome.value = aluno.nome || '';
     form.cpf.value = aluno.cpf || '';
     form.data_nascimento.value = aluno.data_nascimento || '';
@@ -234,12 +240,12 @@ function editAluno(matricula) {
     form.scrollIntoView({ behavior: 'smooth' });
   });
 }
-function deleteAluno(matricula) {
+function deleteAluno(id_aluno) {
   if (confirm('Excluir este aluno?')) {
-    fetch(`http://localhost:8000/alunos.php`, {
+    fetch('http://localhost:8000/alunos.php', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matricula })
+      body: JSON.stringify({ id_aluno })
     })
       .then(res => {
         if (res.ok) {
@@ -970,7 +976,6 @@ async function renderMatriculas() {
           <label>Status</label>
           <select name="status" required>
             <option value="Ativa">Ativa</option>
-            <option value="Trancada">Trancada</option>
             <option value="Cancelada">Cancelada</option>
           </select>
         </div>

@@ -41,24 +41,30 @@ try {
 
   case 'PUT':
     $dados = json_decode(file_get_contents('php://input'), true);
-    $stmt = $pdo->prepare('UPDATE aluno SET nome=?, cpf=?, data_nascimento=?, email=?, telefone=? WHERE id_matricula=?');
+    $stmt = $pdo->prepare('UPDATE aluno SET nome=?, cpf=?, data_nascimento=?, email=?, telefone=? WHERE id_aluno=?');
     $stmt->execute([
         $dados['nome'] ?? '',
         $dados['cpf'] ?? '',
         $dados['data_nascimento'] ?? null,
         $dados['email'] ?? '',
         $dados['telefone'] ?? '',
-        $dados['id_matricula']
+        $dados['id_aluno']
     ]);
     echo json_encode(['mensagem' => 'Aluno atualizado']);
     break;
 
-  case 'DELETE':
-    $dados = json_decode(file_get_contents('php://input'), true);
-    $stmt = $pdo->prepare('DELETE FROM aluno WHERE id_matricula=?');
-    $stmt->execute([$dados['id_matricula']]);
-    echo json_encode(['mensagem' => 'Aluno excluído']);
-    break;
+    case 'DELETE':
+      $dados = json_decode(file_get_contents('php://input'), true);
+      $id_aluno = isset($dados['id_aluno']) ? intval($dados['id_aluno']) : null;
+      if ($id_aluno) {
+          $stmt = $pdo->prepare('DELETE FROM aluno WHERE id_aluno=?');
+          $stmt->execute([$id_aluno]);
+          echo json_encode(['mensagem' => 'Aluno excluído']);
+      } else {
+          http_response_code(400);
+          echo json_encode(['erro' => 'ID do aluno inválido']);
+      }
+      break;
 
   default:
     http_response_code(405);
